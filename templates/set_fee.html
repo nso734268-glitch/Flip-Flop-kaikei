@@ -1,3 +1,9 @@
+@app.route('/add')
+def add():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    # ...元のコード...
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
