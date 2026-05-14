@@ -1,3 +1,40 @@
+from flask import Flask, render_template, request, redirect, url_for, session
+
+app = Flask(__name__)
+# セッション（ログイン状態の保持）に必要。好きな文字列に変えてください。
+app.secret_key = 'FlipFlop' 
+
+# ログイン用設定（ここでIDとパスワードを決める）
+USER_ID = "kaikei"
+USER_PASS = "2026"
+
+# ログイン画面のルート
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        id = request.form.get('id')
+        password = request.form.get('password')
+        
+        if id == USER_ID and password == USER_PASS:
+            session['logged_in'] = True
+            return redirect(url_for('index'))
+        else:
+            return "IDまたはパスワードが違います"
+            
+    return render_template('login.html')
+
+# 既存のページに「ログインチェック」を追加
+@app.route('/')
+def index():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    return render_template('index.html')
+
+
+
+
+
+
 from flask import Flask, render_template, request, redirect, jsonify, Response
 import sqlite3
 from datetime import datetime, timedelta
