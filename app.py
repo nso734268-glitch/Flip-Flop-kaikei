@@ -1,3 +1,14 @@
+@app.route('/add')
+def add():
+    # ここに書くのが正解です！
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    
+    # ログインOKな人だけが、ここを通って下のHTMLを見ることができます
+    return render_template('add.html')
+
+
+
 from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
