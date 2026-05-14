@@ -1,58 +1,16 @@
-@app.route('/add')
-def add():
-    # ここに書くのが正解です！
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    
-    # ログインOKな人だけが、ここを通って下のHTMLを見ることができます
-    return render_template('add.html')
-
-
-
-from flask import Flask, render_template, request, redirect, url_for, session
-
-app = Flask(__name__)
-# セッション（ログイン状態の保持）に必要。好きな文字列に変えてください。
-app.secret_key = 'FlipFlop' 
-
-# ログイン用設定（ここでIDとパスワードを決める）
-USER_ID = "kaikei"
-USER_PASS = "2026"
-
-# ログイン画面のルート
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        id = request.form.get('id')
-        password = request.form.get('password')
-        
-        if id == USER_ID and password == USER_PASS:
-            session['logged_in'] = True
-            return redirect(url_for('index'))
-        else:
-            return "IDまたはパスワードが違います"
-            
-    return render_template('login.html')
-
-# 既存のページに「ログインチェック」を追加
-@app.route('/')
-def index():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    return render_template('index.html')
-
-
-
-
-
-
-from flask import Flask, render_template, request, redirect, jsonify, Response
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, Response
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime
 import csv
 import io
 
 app = Flask(__name__)
+# セッション（ログイン状態の保持）に必要
+app.secret_key = 'FlipFlop' 
+
+# ログイン用設定
+USER_ID = "kaikei"
+USER_PASS = "2026"
 DB_NAME = 'account.db'
 
 def init_db():
@@ -72,6 +30,43 @@ def init_db():
     c.execute("INSERT OR IGNORE INTO settings (id, initial_fee) VALUES (1, 100000)")
     conn.commit()
     conn.close()
+
+# ==========================================
+# ログイン・セキュリティ機能
+# ==========================================
+
+# ログイン画面のルート
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        id = request.form.get('id')
+        password = request.form.get('password')
+        
+        if id == USER_ID and password == USER_PASS:
+            session['logged_in'] = True
+            return redirect(url_for('index'))
+        else:
+            return "IDまたはパスワードが違います"
+            
+    return render_template('login.html')
+
+# ログアウト機能
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    return redirect(url_for('login'))
+
+# 【超便利機能】どのページを開く前にも、必ずログインチェックを自動で行う
+@app.before_request
+def check_login():
+    # ログイン画面と静的ファイル（画像など）以外にアクセスしようとした時
+    if request.endpoint not in ['login', 'static'] and not session.get('logged_in'):
+        # ログインしていなければ、強制的にログイン画面へ飛ばす
+        return redirect(url_for('login'))
+
+# ==========================================
+# メインの会計システム機能
+# ==========================================
 
 @app.route('/')
 def index():
@@ -149,7 +144,6 @@ def index():
 @app.route('/add', methods=['GET', 'POST'])
 def add():
     if request.method == 'POST':
-        # 単体登録
         if 'single' in request.form:
             date = request.form['date']
             category = request.form['category']
@@ -161,7 +155,6 @@ def add():
                       (date, category, amount, memo))
             conn.commit()
             conn.close()
-        # 複数登録
         elif 'multi' in request.form:
             dates = request.form.getlist('date[]')
             categories = request.form.getlist('category[]')
