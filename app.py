@@ -175,7 +175,12 @@ def set_fee():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     if request.method == 'POST':
-        new_fee = request.form['initial_fee']
+        # --- ここから修正 ---
+        raw_fee = request.form['initial_fee']
+        # カンマ(,)を空文字('')に置き換えて削除し、整数(int)に変換する
+        new_fee = int(raw_fee.replace(',', ''))
+        # --- ここまで修正 ---
+        
         c.execute("UPDATE settings SET initial_fee = ? WHERE id = 1", (new_fee,))
         conn.commit()
         conn.close()
