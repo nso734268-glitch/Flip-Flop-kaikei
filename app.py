@@ -147,7 +147,11 @@ def add():
         if 'single' in request.form:
             date = request.form['date']
             category = request.form['category']
-            amount = request.form['amount']
+            
+            # 【修正】カンマを削除して数値化
+            raw_amount = request.form['amount']
+            amount = int(str(raw_amount).replace(',', ''))
+            
             memo = request.form['memo']
             conn = sqlite3.connect(DB_NAME)
             c = conn.cursor()
@@ -163,8 +167,10 @@ def add():
             conn = sqlite3.connect(DB_NAME)
             c = conn.cursor()
             for d, cat, amt, mem in zip(dates, categories, amounts, memos):
+                # 【修正】カンマを削除して数値化
+                clean_amt = int(str(amt).replace(',', ''))
                 c.execute("INSERT INTO records (date, category, amount, memo) VALUES (?, ?, ?, ?)",
-                          (d, cat, amt, mem))
+                          (d, cat, clean_amt, mem))
             conn.commit()
             conn.close()
         return redirect('/')
@@ -175,11 +181,9 @@ def set_fee():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     if request.method == 'POST':
-        # --- ここから修正 ---
         raw_fee = request.form['initial_fee']
         # カンマ(,)を空文字('')に置き換えて削除し、整数(int)に変換する
-        new_fee = int(raw_fee.replace(',', ''))
-        # --- ここまで修正 ---
+        new_fee = int(str(raw_fee).replace(',', ''))
         
         c.execute("UPDATE settings SET initial_fee = ? WHERE id = 1", (new_fee,))
         conn.commit()
@@ -198,7 +202,11 @@ def edit_record(record_id):
     if request.method == 'POST':
         date = request.form['date']
         category = request.form['category']
-        amount = request.form['amount']
+        
+        # 【修正】カンマを削除して数値化
+        raw_amount = request.form['amount']
+        amount = int(str(raw_amount).replace(',', ''))
+        
         memo = request.form['memo']
         c.execute("UPDATE records SET date=?, category=?, amount=?, memo=? WHERE id=?",
                   (date, category, amount, memo, record_id))
